@@ -1,32 +1,50 @@
-import { ChatGPTAPI } from 'chatgpt';
+import { Configuration, OpenAIApi } from 'openai';
 import config from './config.js';
 import { retryRequest } from './utils.js';
 
 let chatGPT: any = {};
 let chatOption = {};
+
+const configuration = new Configuration({
+  organization: 'org-rxkRvptN9B6BeO38E4Gycpc0',
+  apiKey: config.OPENAI_API_KEY,
+});
+
+// const completion = await openai.createChatCompletion({
+//   model: "gpt-3.5-turbo",
+//   messages: [{role: "user", content: "Hello world"}],
+// });
+
+// console.log(completion.data.choices[0].message);
+
 export function initChatGPT() {
-  chatGPT = new ChatGPTAPI({
-    apiKey: config.OPENAI_API_KEY,
-    // completionParams: {
-    //   model: 'text-chat-davinci-002-sh-alpha-aoruigiofdj83',
-    // },
-  });
+  chatGPT = new OpenAIApi(configuration);
 }
 
 async function getChatGPTReply(content, contactId) {
-  const { conversationId, text, id } = await chatGPT.sendMessage(
-    content,
+  const completion = await chatGPT.createChatCompletion(
+    {
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: content }],
+    },
     chatOption[contactId]
   );
+  // const { conversationId, text, id } = await chatGPT.sendMessage(
+  //   content,
+  //   chatOption[contactId]
+  // );
   chatOption = {
     [contactId]: {
-      conversationId,
-      parentMessageId: id,
+      parentMessageId: completion.data.id,
     },
   };
-  console.log('response: ', conversationId, text);
+  console.log(
+    'response: ',
+    completion.data.id,
+    completion.data.choices[0].message.content
+  );
   // response is a markdown-formatted string
-  return text;
+  return completion.data.choices[0].message.content.replace('\n', '');
 }
 
 export async function replyMessage(contact, content) {

@@ -24,12 +24,12 @@ async function onMessage(msg) {
   if (room && isText) {
     const topic = await room.topic();
     console.log(
-      `Group name: ${topic} talker: ${await contact.name()} content: ${content}`
+      `Group name: ${topic} talker: ${await contact.name()} content: ${content} msg.to: ${receiver.name()}`
     );
-
-    const pattern = RegExp(`^@${receiver.name()}\\s+${config.groupKey}[\\s]*`);
+    const roompattern = RegExp(`^${config.groupKey}[\\s]*`);
+    const pattern = RegExp(`^@${receiver.name()}\\s`);
     if (await msg.mentionSelf()) {
-      if (pattern.test(content)) {
+      if (roompattern.test(topic) && pattern.test(content)) {
         const groupContent = content.replace(pattern, '');
         replyMessage(room, groupContent);
         return;
